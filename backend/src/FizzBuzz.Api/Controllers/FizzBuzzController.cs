@@ -8,7 +8,15 @@ namespace FizzBuzz.Api.Controllers;
 [Route("api/[controller]")]
 public sealed class FizzBuzzController(IFizzBuzzService fizzBuzzService, ILogger<FizzBuzzController> logger) : ControllerBase
 {
-    /// <summary>GET api/fizzbuzz?int1=3&amp;int2=5&amp;limit=15&amp;str1=Fizz&amp;str2=Buzz</summary>
+    /// <summary>Génère la séquence FizzBuzz de 1 à <paramref name="limit"/>.</summary>
+    /// <remarks>Exemple : GET api/fizzbuzz?int1=3&amp;int2=5&amp;limit=15&amp;str1=Fizz&amp;str2=Buzz</remarks>
+    /// <param name="int1">Les multiples de ce nombre sont remplacés par <paramref name="str1"/>.</param>
+    /// <param name="int2">Les multiples de ce nombre sont remplacés par <paramref name="str2"/>.</param>
+    /// <param name="limit">Dernier nombre de la séquence.</param>
+    /// <param name="str1">Texte affiché pour les multiples de <paramref name="int1"/>.</param>
+    /// <param name="str2">Texte affiché pour les multiples de <paramref name="int2"/>.</param>
+    /// <response code="200">La séquence générée.</response>
+    /// <response code="400">Paramètres invalides.</response>
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
