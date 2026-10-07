@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FizzBuzz.Api/FizzBuzz.Api.csproj" />
+    <Project Path="src/FizzBuzz.Application/FizzBuzz.Application.csproj" />
+    <Project Path="src/FizzBuzz.Domain/FizzBuzz.Domain.csproj" />
+    <Project Path="src/FizzBuzz.Infrastructure/FizzBuzz.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FizzBuzz.Api.Tests/FizzBuzz.Api.Tests.csproj" />
+    <Project Path="tests/FizzBuzz.Application.Tests/FizzBuzz.Application.Tests.csproj" />
+    <Project Path="tests/FizzBuzz.Domain.Tests/FizzBuzz.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

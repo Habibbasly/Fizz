@@ -1,0 +1,31 @@
+<form class="controls" (ngSubmit)="generate()">
+  <label>
+    int1
+    <input type="number" name="int1" [(ngModel)]="params.int1" min="1" required />
+  </label>
+  <label>
+    str1
+    <input type="text" name="str1" [(ngModel)]="params.str1" required />
+  </label>
+  <label>
+    int2
+    <input type="number" name="int2" [(ngModel)]="params.int2" min="1" required />
+  </label>
+  <label>
+    str2
+    <input type="text" name="str2" [(ngModel)]="params.str2" required />
+  </label>
+  <label>
+    limit
+    <input type="number" name="limit" [(ngModel)]="params.limit" min="1" required />
+  </label>
+  <button type="submit" [disabled]="loading()">
+    {{ loading() ? 'Chargement…' : 'Générer' }}
+  </button>
+</form>
+
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+
+<app-fizzbuzz-list [items]="items()" />
