@@ -48,6 +48,8 @@ jobs:
       # Pas de package-lock.json dans le dépôt : remplacer par "npm ci" une fois le lockfile versionné.
       - run: npm install
 
+      - run: npm run lint
+
       - run: npm run build
 
       - run: npm run test:ci

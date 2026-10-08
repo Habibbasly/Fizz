@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: ./backend
+    image: fizzbuzz-api
+    environment:
+      # Development active Swagger (http://localhost:5029/swagger) ; passer à Production pour s'en rapprocher.
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+    ports:
+      - "5029:8080"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        BUILD_CONFIGURATION: docker
+    image: fizzbuzz-web
+    environment:
+      API_UPSTREAM: http://api:8080
+    ports:
+      - "4200:8080"
+    depends_on:
+      - api
+    restart: unless-stopped
