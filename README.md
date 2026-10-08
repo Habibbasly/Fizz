@@ -44,6 +44,18 @@ npm install
 npm start
 ```
 
+## Tests
+
+| Niveau | Où | Commande |
+|---|---|---|
+| Unitaires domaine / service | `backend/tests/FizzBuzz.Domain.Tests`, `FizzBuzz.Application.Tests` | `cd backend && dotnet test` |
+| Intégration HTTP (API en mémoire : validation, config, environnements, CORS, erreurs, health checks, contrat OpenAPI) | `backend/tests/FizzBuzz.Api.Tests` | `cd backend && dotnet test` |
+| Intégration front (page + service, backend simulé) | `frontend/src/**/*.spec.ts` | `cd frontend && npm test` (ou `npm run test:ci`) |
+| Bout en bout (vrai backend + front) | `frontend/e2e` | `cd frontend && npx playwright install chromium && npm run e2e` |
+
+Les tests Playwright démarrent eux-mêmes le backend et `ng serve` (ou réutilisent ceux déjà lancés en local).
+La CI GitHub Actions (`.github/workflows/ci.yml`) exécute les trois niveaux sur chaque PR vers `dev`, `preprod` et `main`.
+
 ## API
 
 `GET /api/fizzbuzz?int1=3&int2=5&limit=15&str1=Fizz&str2=Buzz`

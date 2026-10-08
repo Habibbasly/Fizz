@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, preprod, main]
+  pull_request:
+    branches: [dev, preprod, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (unitaires + intégration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Tests
+        working-directory: backend
+        run: dotnet test FizzBuzz.slnx --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Couverture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/TestResults/**/coverage.cobertura.xml
+
+  frontend:
+    name: Frontend (build + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Pas de package-lock.json dans le dépôt : remplacer par "npm ci" une fois le lockfile versionné.
+      - run: npm install
+
+      - run: npm run build
+
+      - run: npm run test:ci
+
+  e2e:
+    name: Bout en bout (Playwright)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Build du backend
+        run: dotnet build ../backend/src/FizzBuzz.Api
+
+      - run: npm run e2e
+
+      - name: Rapport Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
