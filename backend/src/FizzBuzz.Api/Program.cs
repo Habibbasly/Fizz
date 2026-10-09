@@ -1,5 +1,6 @@
 using FizzBuzz.Api.Configuration;
 using FizzBuzz.Api.HealthChecks;
+using FizzBuzz.Api.Observability;
 using FizzBuzz.Application;
 using FizzBuzz.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -15,12 +16,15 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    var applicationInsightsEnabled = builder.AddApplicationInsights();
+
     builder.Services.AddSerilog((services, logger) => logger
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
         .Enrich.WithProperty("Application", builder.Environment.ApplicationName)
-        .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName));
+        .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName),
+        writeToProviders: applicationInsightsEnabled);
 
     builder.Services
         .AddApplication(builder.Configuration)
