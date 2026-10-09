@@ -267,7 +267,21 @@ Aucun commit n'est poussé directement sur `dev`, `preprod` ou `main` : tout pas
 
 - **Vers la recette :** une merge request `dev → preprod` regroupe les tickets d'une version. Après déploiement,
   la recette valide les tickets en préproduction.
-- **Vers la production :** une fois la recette validée, une merge request `preprod → main` est fusionnée et la
-  version est étiquetée (`git tag v1.2.0`).
+- **Vers la production :** une fois la recette validée, une merge request `preprod → main` est ouverte.
+  Après les tests, le job « Validation production » attend qu'un validateur de l'environnement GitHub `production`
+  approuve la mise en production (onglet Actions → *Review deployments*). La merge request est ensuite fusionnée
+  et la version est étiquetée (`git tag v1.2.0`).
 - **Hotfix :** une branche `hotfix/...` part de `main` et passe par une merge request vers `main`, puis la
   correction est reportée dans `preprod` et `dev` pour ne pas être perdue à la livraison suivante.
+
+### Protection des branches
+
+Les règles sont appliquées par GitHub, administrateurs compris :
+
+| Branche | Merge request obligatoire | CI verte obligatoire | Validation manuelle | Force-push / suppression |
+|---|---|---|---|---|
+| `dev` | oui | oui | non | interdits |
+| `preprod` | oui | oui | non | interdits |
+| `main` | oui | oui | oui (environnement `production`) | interdits |
+
+Les discussions ouvertes sur une merge request doivent être résolues avant la fusion.
