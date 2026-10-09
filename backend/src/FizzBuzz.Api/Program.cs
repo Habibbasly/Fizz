@@ -69,6 +69,11 @@ try
     if (!app.Environment.IsProduction())
     {
         app.MapOpenApi();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/openapi/v1.json", "FizzBuzz API v1");
+            options.DocumentTitle = "FizzBuzz API";
+        });
     }
 
     app.UseHttpsRedirection();
