@@ -5,9 +5,9 @@ WORKDIR /app
 # Configuration Angular à utiliser (docker, preprod, production).
 ARG BUILD_CONFIGURATION=docker
 
-# Pas de package-lock.json dans le dépôt : remplacer par "npm ci" une fois le lockfile versionné.
-COPY package*.json ./
-RUN npm install --no-audit --no-fund
+# Installation à part pour profiter du cache Docker ; npm ci installe exactement les versions de package-lock.json.
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 RUN npx ng build --configuration ${BUILD_CONFIGURATION}

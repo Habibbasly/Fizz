@@ -69,6 +69,36 @@ npm install
 npm start
 ```
 
+## Lancer avec Docker
+
+Prérequis : Docker (ou Docker Desktop) avec Compose. Depuis la racine du dépôt :
+
+```bash
+docker compose up --build
+```
+
+| Service | URL | Rôle |
+|---|---|---|
+| `web` | http://localhost:4200 | Front Angular servi par nginx, qui relaie `/api` vers le backend |
+| `api` | http://localhost:5029 | API .NET (Swagger sur http://localhost:5029/swagger, health check sur `/health/ready`) |
+
+Compose lance l'API en `Development` pour exposer Swagger. Pour se rapprocher de la production :
+
+```bash
+ASPNETCORE_ENVIRONMENT=Production docker compose up --build
+```
+
+Les images peuvent aussi être construites séparément :
+
+```bash
+docker build -t fizzbuzz-api ./backend
+docker run --rm -p 5029:8080 fizzbuzz-api          # Production par défaut
+
+docker build -t fizzbuzz-web ./frontend
+```
+
+Les deux images sont multi-stage (SDK / Node pour le build, runtime léger ensuite) et s'exécutent avec un utilisateur non-root.
+
 ## Tests
 
 | Niveau | Où | Commande |
@@ -97,6 +127,21 @@ Paramètres (tous obligatoires) — sinon `400 Bad Request` (ProblemDetails) :
 | `int1`, `int2` | entiers > 0 |
 | `limit` | entier entre 1 et `FizzBuzz:MaxLimit` (10 000 par défaut) |
 | `str1`, `str2` | chaînes non vides |
+
+Les paramètres sont validés explicitement (`FizzBuzzRequestValidator`) avant d'appeler le domaine : une saisie
+invalide n'est pas traitée par exception. La réponse 400 est un `ValidationProblemDetails` qui liste toutes les erreurs
+par paramètre, au même format que les erreurs de binding (paramètre manquant ou non numérique) :
+
+```json
+{
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "int1": ["Le diviseur doit être strictement positif."],
+    "limit": ["La limite ne peut pas dépasser 10000."]
+  }
+}
+```
 
 ## Environnements
 
@@ -161,3 +206,68 @@ L'API prend en compte les en-têtes `X-Forwarded-For` / `X-Forwarded-Proto` lors
 | `main` | Production : reçoit `preprod` une fois la version validée |
 
 Les changements descendent toujours dans le même sens : `feature → dev → preprod → main`.
+Aucun commit n'est poussé directement sur `dev`, `preprod` ou `main` : tout passe par une merge request (pull request sur GitHub).
+
+### Traiter un ticket
+
+1. **Partir de `dev` à jour**
+
+   ```bash
+   git checkout dev
+   git pull origin dev
+   ```
+
+2. **Créer une branche dédiée au ticket**, nommée d'après son type, son numéro et son sujet :
+
+   ```bash
+   git checkout -b feature/FB-42-historique-requetes
+   ```
+
+   | Préfixe | Usage |
+   |---|---|
+   | `feature/` | Nouvelle fonctionnalité |
+   | `fix/` | Correction de bug |
+   | `chore/` | Outillage, dépendances, CI, documentation |
+   | `hotfix/` | Correction urgente en production (voir plus bas) |
+
+3. **Développer par petits commits**, chacun cohérent et compilable, avec un message à l'impératif qui cite le ticket :
+
+   ```bash
+   git commit -m "FB-42 Add request history endpoint"
+   ```
+
+   Avant de pousser : `dotnet test` dans `backend/`, puis `npm run lint` et `npm run test:ci` dans `frontend/`.
+
+4. **Se resynchroniser avec `dev`** si elle a avancé pendant le développement, puis pousser la branche :
+
+   ```bash
+   git fetch origin
+   git rebase origin/dev        # résoudre les conflits éventuels, relancer les tests
+   git push -u origin feature/FB-42-historique-requetes
+   ```
+
+5. **Ouvrir une merge request vers `dev`**. La description indique le ticket, ce qui change, comment le tester
+   et les points d'attention (migration, configuration, rupture de contrat d'API).
+
+6. **Validation**
+   - la CI doit être verte : tests backend, lint, build et tests front, tests de bout en bout ;
+   - au moins une revue de code approuvée ; les remarques sont traitées par de nouveaux commits sur la même branche ;
+   - l'auteur ne fusionne pas sans approbation.
+
+7. **Fusion dans `dev`** depuis l'interface (squash ou merge commit selon la convention de l'équipe),
+   puis suppression de la branche :
+
+   ```bash
+   git checkout dev
+   git pull origin dev
+   git branch -d feature/FB-42-historique-requetes
+   ```
+
+### Livraison
+
+- **Vers la recette :** une merge request `dev → preprod` regroupe les tickets d'une version. Après déploiement,
+  la recette valide les tickets en préproduction.
+- **Vers la production :** une fois la recette validée, une merge request `preprod → main` est fusionnée et la
+  version est étiquetée (`git tag v1.2.0`).
+- **Hotfix :** une branche `hotfix/...` part de `main` et passe par une merge request vers `main`, puis la
+  correction est reportée dans `preprod` et `dev` pour ne pas être perdue à la livraison suivante.
