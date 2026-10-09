@@ -88,3 +88,15 @@ jobs:
           path: |
             frontend/playwright-report
             frontend/test-results
+
+  # Mise en production : une PR vers main ne peut être fusionnée qu'après validation manuelle.
+  # Le job attend l'approbation d'un validateur de l'environnement GitHub « production »
+  # (Settings → Environments), une fois tous les tests au vert.
+  production-approval:
+    name: Validation production
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, e2e]
+    environment: production
+    steps:
+      - run: echo "Mise en production de ${{ github.head_ref }} validée."
