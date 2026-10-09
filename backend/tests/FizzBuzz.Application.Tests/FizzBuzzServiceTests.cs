@@ -38,20 +38,55 @@ public class FizzBuzzServiceTests
     }
 
     [Fact]
-    public void Generate_AcceptsConfiguredMaxLimit()
+    public void Generate_ConcatenatesStr1ThenStr2EvenWhenInt1IsGreater()
     {
-        Assert.Equal(MaxLimit, _service.Generate(new FizzBuzzRequest(3, 5, MaxLimit, "Fizz", "Buzz")).Count);
+        var result = _service.Generate(new FizzBuzzRequest(5, 3, 15, "Buzz", "Fizz"));
+
+        Assert.Equal("BuzzFizz", result[14]);
+    }
+
+    [Fact]
+    public void Generate_WithDivisorOne_ReplacesEveryNumber()
+    {
+        var result = _service.Generate(new FizzBuzzRequest(1, 100, 5, "x", "y"));
+
+        Assert.All(result, value => Assert.Equal("x", value));
     }
 
     [Theory]
-    [InlineData(0, 5, 15, "Fizz", "Buzz")]
-    [InlineData(3, -1, 15, "Fizz", "Buzz")]
-    [InlineData(3, 5, 0, "Fizz", "Buzz")]
-    [InlineData(3, 5, MaxLimit + 1, "Fizz", "Buzz")]
-    [InlineData(3, 5, 15, "", "Buzz")]
-    [InlineData(3, 5, 15, "Fizz", " ")]
-    public void Generate_RejectsInvalidParameters(int int1, int int2, int limit, string str1, string str2)
+    [InlineData(1)]
+    [InlineData(MaxLimit)]
+    public void Generate_ReturnsOneValuePerNumberUpToLimit(int limit)
     {
-        Assert.ThrowsAny<ArgumentException>(() => _service.Generate(new FizzBuzzRequest(int1, int2, limit, str1, str2)));
+        Assert.Equal(limit, _service.Generate(new FizzBuzzRequest(3, 5, limit, "Fizz", "Buzz")).Count);
+    }
+
+    [Fact]
+    public void Generate_RejectsLimitAboveConfiguredMax()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(
+            () => _service.Generate(new FizzBuzzRequest(3, 5, MaxLimit + 1, "Fizz", "Buzz")));
+
+        Assert.Contains(MaxLimit.ToString(), ex.Message);
+    }
+
+    [Theory]
+    [InlineData(0, 5, 15)]
+    [InlineData(3, -1, 15)]
+    [InlineData(3, 5, 0)]
+    [InlineData(3, 5, -10)]
+    public void Generate_RejectsOutOfRangeNumbers(int int1, int int2, int limit)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => _service.Generate(new FizzBuzzRequest(int1, int2, limit, "Fizz", "Buzz")));
+    }
+
+    [Theory]
+    [InlineData("", "Buzz")]
+    [InlineData("Fizz", " ")]
+    [InlineData(null, "Buzz")]
+    [InlineData("Fizz", null)]
+    public void Generate_RejectsEmptyStrings(string? str1, string? str2)
+    {
+        Assert.Throws<ArgumentException>(() => _service.Generate(new FizzBuzzRequest(3, 5, 15, str1!, str2!)));
     }
 }
