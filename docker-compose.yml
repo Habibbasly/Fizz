@@ -6,6 +6,8 @@ services:
     environment:
       # Development active Swagger (http://localhost:5029/swagger) ; passer à Production pour s'en rapprocher.
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      # Facultatif : renseigner pour envoyer logs et métriques vers Application Insights (vide = console uniquement).
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${APPLICATIONINSIGHTS_CONNECTION_STRING:-}
     ports:
       - "5029:8080"
     restart: unless-stopped

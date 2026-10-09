@@ -181,6 +181,32 @@ Serilog, sortie console (stdout) : à collecter par la plateforme (Docker, Kuber
 Chaque requête HTTP produit une ligne de log (méthode, chemin, code de retour, durée).
 Les logs sont enrichis avec `Application` et `Environment`. Les appels aux health checks ne sont pas tracés.
 
+| Contexte | Où lire les logs |
+|---|---|
+| `dotnet run` | Terminal |
+| Docker | `docker compose logs -f api` |
+| Production | Application Insights (voir ci-dessous) ou l'outil de collecte de la plateforme |
+
+### Monitoring : Application Insights
+
+L'API peut envoyer sa télémétrie vers [Azure Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/opentelemetry-enable?tabs=aspnetcore)
+via OpenTelemetry (`Azure.Monitor.OpenTelemetry.AspNetCore`) : logs Serilog, requêtes HTTP, temps de réponse,
+exceptions et métriques. Les health checks sont exclus, comme pour les logs.
+
+Activation : renseigner la chaîne de connexion de la ressource Application Insights (portail Azure → ressource → *Overview*).
+
+```bash
+# local
+export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=...;IngestionEndpoint=..."
+# Docker : la variable est relayée par docker-compose.yml
+APPLICATIONINSIGHTS_CONNECTION_STRING="..." docker compose up --build
+```
+
+Sans chaîne de connexion, rien n'est envoyé et les logs restent sur la console : le projet fonctionne sans compte Azure.
+Le code est gratuit ; côté Azure, Application Insights est facturé au volume ingéré avec un quota mensuel gratuit
+(voir la [grille tarifaire Azure Monitor](https://azure.microsoft.com/pricing/details/monitor/)), largement suffisant ici.
+La chaîne de connexion se fournit par variable d'environnement ou coffre de secrets, jamais dans le dépôt.
+
 ### Health checks
 
 | Endpoint | Usage |
@@ -285,3 +311,40 @@ Les règles sont appliquées par GitHub, administrateurs compris :
 | `main` | oui | oui | oui (environnement `production`) | interdits |
 
 Les discussions ouvertes sur une merge request doivent être résolues avant la fusion.
+
+## Dans le cadre d'un vrai projet
+
+Le test demande un calcul sans état. Pour un client, la valeur viendrait surtout de ce que l'on apprend de l'usage.
+Pistes, dans l'ordre où je les mènerais :
+
+### 1. Une base de données fiable
+
+C'est le socle des deux étapes suivantes : un tableau de bord ou une IA ne valent que par les données qu'on leur donne.
+
+- Historiser chaque appel (paramètres, nombre de valeurs, durée, statut, environnement, date) dans une base relationnelle
+  (SQL Server ou PostgreSQL), implémentée dans `FizzBuzz.Infrastructure` derrière une interface de `FizzBuzz.Application` :
+  le domaine et l'API ne changent pas.
+- Schéma versionné (migrations EF Core), contraintes en base, health check `/health/ready` sur la connexion.
+- Qualité et conformité : aucune donnée personnelle stockée, durée de rétention définie, sauvegardes testées.
+
+### 2. Une partie BI : des KPI pour le client
+
+Un tableau de bord (Power BI, ou Grafana / Metabase) branché sur la base et sur Application Insights :
+
+| KPI | Intérêt pour le client |
+|---|---|
+| Volume d'appels par jour / semaine | Adoption du service |
+| Paramètres les plus utilisés | Comprendre les usages réels |
+| Temps de réponse (médiane, p95) | Qualité de service perçue |
+| Taux d'erreurs 4xx / 5xx | Fiabilité, saisies à mieux guider dans le front |
+| Disponibilité (health checks) | Suivi des engagements de service |
+
+### 3. Une intégration d'IA
+
+Sur cette base fiable, une IA apporterait :
+
+- **Un assistant en langage naturel** sur les KPI (« combien d'appels la semaine dernière, et pourquoi ce pic d'erreurs mardi ? »).
+  Le modèle s'appuie sur des vues agrégées en lecture seule, jamais directement sur les tables.
+- **La détection d'anomalies** sur les métriques (pic d'erreurs, dégradation des temps de réponse), avec alerte.
+- **Des garde-fous** : accès en lecture seule, données agrégées sans données personnelles, journalisation des questions
+  posées et des requêtes générées, réponses toujours sourcées par les chiffres affichés.
