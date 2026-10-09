@@ -36,6 +36,8 @@ dotnet run --project src/FizzBuzz.Api --launch-profile http   # ou preprod / pro
 dotnet test
 ```
 
+Documentation interactive (hors Production) : Swagger UI sur http://localhost:5029/swagger.
+
 Frontend (http://localhost:4200, `/api` est proxifié vers le backend) :
 
 ```bash
@@ -88,7 +90,7 @@ puis par les variables d'environnement (ex : `FizzBuzz__MaxLimit=5000`, `Cors__A
 | Niveau de log | Debug | Information | Information (Microsoft.AspNetCore : Warning) |
 | Format des logs | texte lisible | JSON (Compact) | JSON (Compact) |
 | CORS | `http://localhost:4200` | `https://preprod.fizzbuzz.example.com` | `https://fizzbuzz.example.com` |
-| OpenAPI (`/openapi/v1.json`) | oui | oui | non |
+| OpenAPI (`/openapi/v1.json`) + Swagger UI (`/swagger`) | oui | oui | non |
 | HSTS | non | oui | oui |
 
 > Les URLs `*.example.com` sont des valeurs d'exemple à remplacer par les vraies.
@@ -126,3 +128,13 @@ Les vérifications de dépendances futures (base de données, etc.) s'ajoutent d
 
 Les exceptions non gérées renvoient une réponse `500` au format ProblemDetails (sans stack trace) et sont loguées.
 L'API prend en compte les en-têtes `X-Forwarded-For` / `X-Forwarded-Proto` lorsqu'elle est derrière un reverse proxy.
+
+## Branches
+
+| Branche | Rôle |
+|---|---|
+| `dev` | Intégration continue : les branches de fonctionnalité y sont fusionnées par pull request |
+| `preprod` | Recette : reçoit `dev` lorsqu'une version est prête à être validée |
+| `main` | Production : reçoit `preprod` une fois la version validée |
+
+Les changements descendent toujours dans le même sens : `feature → dev → preprod → main`.
