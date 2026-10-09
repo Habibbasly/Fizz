@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace FizzBuzz.Api.Tests;
@@ -81,5 +82,18 @@ public class FizzBuzzApiTests(WebApplicationFactory<Program> factory) : IClassFi
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task Get_ReturnsValidationErrorsPerParameter()
+    {
+        var response = await _client.GetAsync("/api/fizzbuzz?int1=0&int2=5&limit=10001&str1=Fizz&str2=Buzz");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Equal(["int1", "limit"], problem.Errors.Keys.Order());
+        Assert.Contains("strictement positif", Assert.Single(problem.Errors["int1"]));
+        Assert.Contains("10000", Assert.Single(problem.Errors["limit"]));
     }
 }

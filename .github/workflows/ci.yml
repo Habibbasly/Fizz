@@ -45,8 +45,7 @@ jobs:
         with:
           node-version: 22
 
-      # Pas de package-lock.json dans le dépôt : remplacer par "npm ci" une fois le lockfile versionné.
-      - run: npm install
+      - run: npm ci
 
       - run: npm run lint
 
@@ -72,7 +71,7 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm install
+      - run: npm ci
 
       - run: npx playwright install --with-deps chromium
 

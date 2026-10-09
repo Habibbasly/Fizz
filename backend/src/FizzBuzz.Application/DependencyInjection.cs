@@ -13,6 +13,7 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddScoped<IFizzBuzzRequestValidator, FizzBuzzRequestValidator>();
         services.AddScoped<IFizzBuzzService, FizzBuzzService>();
         return services;
     }

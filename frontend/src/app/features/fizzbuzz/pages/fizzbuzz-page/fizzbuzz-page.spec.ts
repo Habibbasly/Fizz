@@ -84,6 +84,22 @@ describe('FizzBuzzPage', () => {
     expect(items()).toEqual([]);
   });
 
+  it('affiche les erreurs de validation par paramètre', async () => {
+    const req = await submit();
+    req.flush(
+      {
+        title: 'One or more validation errors occurred.',
+        status: 400,
+        errors: { int1: ['Le diviseur doit être strictement positif.'], limit: ['La limite ne peut pas dépasser 10000.'] },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    await fixture.whenStable();
+
+    expect(errorMessage()).toBe('int1 : Le diviseur doit être strictement positif. limit : La limite ne peut pas dépasser 10000.');
+    expect(items()).toEqual([]);
+  });
+
   it('vide la séquence précédente quand une erreur survient', async () => {
     (await submit()).flush(['1', '2']);
     await fixture.whenStable();

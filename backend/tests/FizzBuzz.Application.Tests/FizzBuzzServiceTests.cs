@@ -1,13 +1,10 @@
 using FizzBuzz.Application.FizzBuzz;
-using Microsoft.Extensions.Options;
 
 namespace FizzBuzz.Application.Tests;
 
 public class FizzBuzzServiceTests
 {
-    private const int MaxLimit = 100;
-
-    private readonly FizzBuzzService _service = new(Options.Create(new FizzBuzzOptions { MaxLimit = MaxLimit }));
+    private readonly FizzBuzzService _service = new();
 
     [Fact]
     public void Generate_MatchesSpecificationExample()
@@ -55,21 +52,14 @@ public class FizzBuzzServiceTests
 
     [Theory]
     [InlineData(1)]
-    [InlineData(MaxLimit)]
+    [InlineData(100)]
     public void Generate_ReturnsOneValuePerNumberUpToLimit(int limit)
     {
         Assert.Equal(limit, _service.Generate(new FizzBuzzRequest(3, 5, limit, "Fizz", "Buzz")).Count);
     }
 
-    [Fact]
-    public void Generate_RejectsLimitAboveConfiguredMax()
-    {
-        var ex = Assert.Throws<ArgumentOutOfRangeException>(
-            () => _service.Generate(new FizzBuzzRequest(3, 5, MaxLimit + 1, "Fizz", "Buzz")));
-
-        Assert.Contains(MaxLimit.ToString(), ex.Message);
-    }
-
+    // Les entrées sont validées en amont (FizzBuzzRequestValidator) : ces tests vérifient que les invariants
+    // du domaine protègent malgré tout le service contre un appel invalide.
     [Theory]
     [InlineData(0, 5, 15)]
     [InlineData(3, -1, 15)]
