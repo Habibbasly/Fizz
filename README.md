@@ -26,6 +26,29 @@ FizzBuzz/
             └── shared/    # composants réutilisables
 ```
 
+## Choix d'architecture
+
+Un FizzBuzz tiendrait dans une Minimal API d'un seul fichier. L'architecture en couches est un **choix délibéré** :
+le projet est traité comme une application destinée à vivre en production et à évoluer, pas comme un exercice jetable.
+
+**Ce que le découpage apporte :**
+
+- **Un métier isolé et testable.** `FizzBuzz.Domain` ne dépend d'aucun framework : `FizzBuzzRule` et `FizzBuzzGame`
+  se testent en mémoire, sans HTTP ni configuration. La règle « str1str2 pour les multiples des deux » découle de la
+  concaténation ordonnée des règles, pas d'un cas particulier codé en dur.
+- **Une API qui ne fait que du HTTP.** Le contrôleur traduit la requête, délègue au service et convertit les erreurs
+  en ProblemDetails. Changer de transport (Minimal API, gRPC, CLI) ne touche ni au domaine ni aux cas d'usage.
+- **Des dépendances à sens unique.** `Api → Application → Domain` : le métier ne connaît jamais l'infrastructure.
+- **Des tests alignés sur les couches.** Tests unitaires pour Domain et Application, tests d'intégration HTTP pour l'Api.
+
+**`FizzBuzz.Infrastructure` est volontairement vide.** Il matérialise l'emplacement des implémentations techniques
+(persistance, cache, appels externes) : par exemple, historiser les requêtes ou exposer des statistiques d'usage
+se ferait dans ce projet, sans modifier le domaine.
+
+**Le compromis assumé :** plus de projets et de fichiers qu'il n'en faut pour le besoin actuel.
+Pour un utilitaire interne sans perspective d'évolution, une Minimal API dans un seul projet serait le bon choix.
+Ici, le surcoût est faible et l'architecture montre comment le projet absorberait de nouvelles fonctionnalités.
+
 ## Lancer en local
 
 Backend (http://localhost:5029) :
