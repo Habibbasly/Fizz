@@ -29,10 +29,22 @@ export class FizzBuzzPage {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.error?.detail ?? err?.error?.title ?? 'Impossible de contacter le serveur.');
+        this.error.set(errorMessage(err?.error));
         this.items.set([]);
         this.loading.set(false);
       },
     });
   }
+}
+
+/**
+ * Extrait un message lisible d'une réponse d'erreur de l'API (ProblemDetails / ValidationProblemDetails).
+ * Les erreurs de validation sont listées par paramètre : "limit : La limite ne peut pas dépasser 10000."
+ */
+function errorMessage(problem: { errors?: Record<string, string[]>; detail?: string; title?: string } | null | undefined): string {
+  if (problem?.errors) {
+    const messages = Object.entries(problem.errors).flatMap(([field, list]) => list.map((m) => `${field} : ${m}`));
+    if (messages.length > 0) return messages.join(' ');
+  }
+  return problem?.detail ?? problem?.title ?? 'Impossible de contacter le serveur.';
 }
